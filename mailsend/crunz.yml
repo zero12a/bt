@@ -9,7 +9,7 @@ source: tasks
 # The suffix is meant to target the task files inside the ":source" directory.
 # Please note if you change this value, you need
 # to make sure all the existing tasks files are renamed accordingly.
-suffix: mail_sender.php
+suffix: mail_batch.php
 
 # Timezone is used to calculate task run time
 # This option is very important and not setting it is deprecated

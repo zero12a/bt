@@ -107,10 +107,10 @@ echo "<pre>BODY:" . $body; // "Hello World!"
 $mailObj = new mailObject($CFG);
 
 $db_start = microtime_float();    
-for($i=0;$i<1000;$i++){
-    echo $i . " ";
-    echo $mailObj->sendDaum($x["EMAIL"],$x["USR_NM"],"daum to gmail " . $title . " " . $i,$body);  //($t_to_email,$t_to_name,$t_subject,$t_message)
-}
+//for($i=0;$i<1000;$i++){
+//    echo $i . " ";
+echo $mailObj->sendDaum($x["EMAIL"],$x["USR_NM"],$title,$body);  //($t_to_email,$t_to_name,$t_subject,$t_message)
+//}
 $db_end = microtime_float();
 
 echo "execute time = " . number_format($db_end - $db_start,2);

@@ -30,11 +30,14 @@ require_once(__DIR__ . "/../../../lib/php/vendor/autoload.php");
 //print_r($CFG["CFG_DB"]["RDCOMMON"]);
 
 use Crunz\Schedule;
-use Symfony\Component\Lock\Store\FlockStore;
+
 $schedule = new Schedule();
-$task = $schedule->run(PHP_BINARY . ' ' . 'mail_job.php');       
+$task = $schedule->run(PHP_BINARY . ' tasks/mail_job.php');       
 $task
     ->in("/data/www/b.t/mailsend")
-    ->cron("* * * * * *")
+    ->cron("* * * * *")
     ->preventOverlapping();
+
+
+return $schedule;
 ?>

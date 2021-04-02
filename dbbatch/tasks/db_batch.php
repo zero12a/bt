@@ -91,7 +91,7 @@ for($i=0;$i<count($tArr);$i++){
     //echo "START_DT2 = " . $x["START_DT2"] . PHP_EOL;
     //echo "END_DT2 = " . $x["END_DT2"] . PHP_EOL;
     $task
-        ->in("/data/www/d.s/crunz")
+        ->in("/data/www/b.t/dbbatch")
         ->cron($x["CRON"])
         ->from($x["START_DT2"])
         ->to($x["END_DT2"]) //23분까지 실행이면, 22분 스케줄은 동작하고 23분 스케줄은 동작 안함.
