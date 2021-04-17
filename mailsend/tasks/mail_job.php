@@ -116,7 +116,8 @@ for($i=0; $i<count($xArr); $i++){
     $db_start = microtime_float();    
     //for($i=0;$i<1000;$i++){
     //    echo $i . " ";
-    list($sendResult, $sendResultMsg) = $mailObj->sendNaver($x["EMAIL"],$x["USR_NM"],$title,$body);  //($t_to_email,$t_to_name,$t_subject,$t_message)
+    $REQ["SENDER"] = "NAVER";
+    list($sendResult, $sendResultMsg) = $mailObj->sendMail($REQ["SENDER"],$x["EMAIL"],$x["USR_NM"],$title,$body);  //($t_to_email,$t_to_name,$t_subject,$t_message)
     //}
     $db_end = microtime_float();
 
@@ -129,25 +130,30 @@ for($i=0; $i<count($xArr); $i++){
         $sql = "
         insert into CMN_MSG_SENDLOG (
             REQUEST_SEQ, USR_SEQ, USR_ID, REQUEST_DT, REQUEST_ID
-            , RES_GBN, RES_MSG
+            , CAMPAIGN_SEQ, SENDER, EMAIL, USR_NM, TITLE
+            , BODY, RES_GBN, RES_MSG
             , ADD_DT, ADD_ID
         )values(
             #{REQUEST_SEQ}, #{USR_SEQ}, #{USR_ID}, #{REQUEST_DT}, #{REQUEST_ID}
-            , #{RES_GBN}, #{RES_MSG}
+            , #{CAMPAIGN_SEQ}, #{SENDER}, #{EMAIL}, #{USR_NM}, #{TITLE}
+            , #{BODY}, #{RES_GBN}, #{RES_MSG}
             , date_format(sysdate(),'%Y%m%d%H%i%s'), 0
         )
         ";
         $REQ["REQUEST_DT"] = $x["REQUEST_DT"];
         $REQ["REQUEST_ID"] = $x["REQUEST_ID"];
         $REQ["REQUEST_SEQ"] = $x["REQUEST_SEQ"];
+        $REQ["CAMPAIGN_SEQ"] = $x["CAMPAIGN_SEQ"];
         $REQ["USR_SEQ"] = $x["USR_SEQ"];
         $REQ["USR_ID"] = $x["USR_ID"];
-        $REQ["SUBJECT"] = $title;
+        $REQ["EMAIL"] = $x["EMAIL"];
+        $REQ["USR_NM"] = $x["USR_NM"];
+        $REQ["TITLE"] = $title;
         $REQ["BODY"] = $body;
         $REQ["RES_GBN"] = "S"; //S:SUCCESS END, F:FAIL END
         $REQ["RES_MSG"] = $sendResultMsg; //S:SUCCESS END, F:FAIL END
 
-        $coltype = "iissi ss";
+        $coltype = "iissi issss sss";
 
         print_r($REQ);
         print_r(getSqlParam($sql,$coltype,$REQ));
@@ -170,12 +176,14 @@ for($i=0; $i<count($xArr); $i++){
         //MSG_BOG에 넣기
         $sql = "
             insert into CMN_MSG_BOX (
-                USR_SEQ, SUBJECT, BODY, SEND_DT, ADD_DT, ADD_ID
+                USR_SEQ, TITLE, BODY, SEND_DT, REQUEST_SEQ
+                , ADD_DT, ADD_ID
             ) values (
-                #{USR_SEQ}, #{SUBJECT}, #{BODY}, date_format(sysdate(),'%Y%m%d%H%i%s'), date_format(sysdate(),'%Y%m%d%H%i%s'), 0
+                #{USR_SEQ}, #{TITLE}, #{BODY}, date_format(sysdate(),'%Y%m%d%H%i%s'), #{REQUEST_SEQ}
+                , date_format(sysdate(),'%Y%m%d%H%i%s'), 0
             )
         ";
-        $coltype = "iss";
+        $coltype = "issi";
         $stmt = makeStmt($db,$sql,$coltype,$REQ);    
         if(!$stmt)ServerMsg("500","303","SQL makeStmt 실패 했습니다.". $db->errno . " -> " . $db->error);
         if(!$stmt->execute())ServerMsg("500","100","stmt 실행 실패" . $stmt->errno . " -> " . $stmt->error);
@@ -186,23 +194,30 @@ for($i=0; $i<count($xArr); $i++){
         $sql = "
         insert into CMN_MSG_SENDLOG (
             REQUEST_SEQ, USR_SEQ, USR_ID, REQUEST_DT, REQUEST_ID
-            , RES_GBN, RES_MSG, ADD_DT, ADD_ID
+            , CAMPAIGN_SEQ, SENDER, EMAIL, USR_NM, TITLE
+            , BODY, RES_GBN, RES_MSG
+            , ADD_DT, ADD_ID
         )values(
             #{REQUEST_SEQ}, #{USR_SEQ}, #{USR_ID}, #{REQUEST_DT}, #{REQUEST_ID}
-            , #{RES_GBN}, #{RES_MSG}, date_format(sysdate(),'%Y%m%d%H%i%s'), 0
+            , #{CAMPAIGN_SEQ}, #{SENDER}, #{EMAIL}, #{USR_NM}, #{TITLE}
+            , #{BODY}, #{RES_GBN}, #{RES_MSG}
+            , date_format(sysdate(),'%Y%m%d%H%i%s'), 0
         )
         ";
         $REQ["REQUEST_DT"] = $x["REQUEST_DT"];
         $REQ["REQUEST_ID"] = $x["REQUEST_ID"];
         $REQ["REQUEST_SEQ"] = $x["REQUEST_SEQ"];
+        $REQ["CAMPAIGN_SEQ"] = $x["CAMPAIGN_SEQ"];
         $REQ["USR_SEQ"] = $x["USR_SEQ"];
         $REQ["USR_ID"] = $x["USR_ID"];
-        $REQ["SUBJECT"] = $title;
+        $REQ["EMAIL"] = $x["EMAIL"];
+        $REQ["USR_NM"] = $x["USR_NM"];        
+        $REQ["TITLE"] = $title;
         $REQ["BODY"] = $body;
         $REQ["RES_GBN"] = "F"; //S:SUCCESS END, F:FAIL END
         $REQ["RES_MSG"] = $sendResultMsg; //S:SUCCESS END, F:FAIL END
 
-        $coltype = "iissi ss";
+        $coltype = "iissi issss sss";
 
         $stmt = makeStmt($db,$sql,$coltype,$REQ);    
         if(!$stmt)ServerMsg("500","311","SQL makeStmt 실패 했습니다.". $db->errno . " -> " . $db->error);
@@ -222,12 +237,14 @@ for($i=0; $i<count($xArr); $i++){
         //MSG_BOX에 넣기
         $sql = "
             insert into CMN_MSG_BOX (
-                USR_SEQ, SUBJECT, BODY, SEND_DT, ADD_DT, ADD_ID
+                USR_SEQ, TITLE, BODY, SEND_DT, REQUEST_SEQ
+                , ADD_DT, ADD_ID
             ) values (
-                #{USR_SEQ}, #{SUBJECT}, #{BODY}, null, date_format(sysdate(),'%Y%m%d%H%i%s'), 0
+                #{USR_SEQ}, #{TITLE}, #{BODY}, null, #{REQUEST_SEQ}
+                , date_format(sysdate(),'%Y%m%d%H%i%s'), 0
             )
         ";
-        $coltype = "iss";
+        $coltype = "issi";
 
         $stmt = makeStmt($db,$sql,$coltype,$REQ);    
         if(!$stmt)ServerMsg("500","313","SQL makeStmt 실패 했습니다.". $db->errno . " -> " . $db->error);
@@ -239,23 +256,30 @@ for($i=0; $i<count($xArr); $i++){
         $sql = "
         insert into CMN_MSG_SENDLOG (
             REQUEST_SEQ, USR_SEQ, USR_ID, REQUEST_DT, REQUEST_ID
-            , RES_GBN, RES_MSG, ADD_DT, ADD_ID
+            , CAMPAIGN_SEQ, SENDER, EMAIL, USR_NM, TITLE
+            , BODY, RES_GBN, RES_MSG
+            , ADD_DT, ADD_ID
         )values(
             #{REQUEST_SEQ}, #{USR_SEQ}, #{USR_ID}, #{REQUEST_DT}, #{REQUEST_ID}
-            , #{RES_GBN}, #{RES_MSG}, date_format(sysdate(),'%Y%m%d%H%i%s'), 0
+            , #{CAMPAIGN_SEQ}, #{SENDER}, #{EMAIL}, #{USR_NM}, #{TITLE}
+            , #{BODY}, #{RES_GBN}, #{RES_MSG}
+            , date_format(sysdate(),'%Y%m%d%H%i%s'), 0
         )
         ";
         $REQ["REQUEST_DT"] = $x["REQUEST_DT"];
         $REQ["REQUEST_ID"] = $x["REQUEST_ID"];
         $REQ["REQUEST_SEQ"] = $x["REQUEST_SEQ"];
+        $REQ["CAMPAIGN_SEQ"] = $x["CAMPAIGN_SEQ"];
         $REQ["USR_SEQ"] = $x["USR_SEQ"];
         $REQ["USR_ID"] = $x["USR_ID"];
-        $REQ["SUBJECT"] = $title;
+        $REQ["EMAIL"] = $x["EMAIL"];
+        $REQ["USR_NM"] = $x["USR_NM"];
+        $REQ["TITLE"] = $title;
         $REQ["BODY"] = $body;
         $REQ["RES_GBN"] = "F"; //S:SUCCESS END, F:FAIL END
         $REQ["RES_MSG"] = $sendResultMsg; //S:SUCCESS END, F:FAIL END
 
-        $coltype = "iissi ss";
+        $coltype = "iissi issss sss";
 
         $stmt = makeStmt($db,$sql,$coltype,$REQ);    
         if(!$stmt)ServerMsg("500","321","SQL makeStmt 실패 했습니다.". $db->errno . " -> " . $db->error);

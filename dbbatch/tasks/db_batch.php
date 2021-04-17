@@ -51,7 +51,7 @@ if(!$stmt)ServerMsg("500","300","SQL makeStmt 실패 했습니다.". $db->errno 
 if(!$stmt->execute())ServerMsg("500","100","stmt 실행 실패" . $stmt->errno . " -> " . $stmt->error);
 $tArr =  getStmtArray($stmt);
 closeStmt($stmt);
-closeDb($db);
+
 
 
 
@@ -81,7 +81,7 @@ for($i=0;$i<count($tArr);$i++){
     $lockStore = new FlockStore($lockFullPath);
 
     //$task = $schedule->run(PHP_BINARY . ' ' . './tasks/demo_crunz_job.php',["BATCH_SEQ" => $x["BATCH_SEQ"]]);       
-    $task = $schedule->run(PHP_BINARY . ' ' . './db_job.php BATCH_SEQ=' . $x["BATCH_SEQ"] );     
+    $task = $schedule->run(PHP_BINARY . ' ' . './tasks/db_job.php BATCH_SEQ=' . $x["BATCH_SEQ"] );     
     $x["START_DT2"] = 
         substr($x["START_DT"],9,2)  . ":" . substr($x["START_DT"],11,2) 
         . " " . substr($x["START_DT"],0,4) . "-" . substr($x["START_DT"],4,2) . "-" . substr($x["START_DT"],6,2); 
@@ -95,8 +95,41 @@ for($i=0;$i<count($tArr);$i++){
         ->cron($x["CRON"])
         ->from($x["START_DT2"])
         ->to($x["END_DT2"]) //23분까지 실행이면, 22분 스케줄은 동작하고 23분 스케줄은 동작 안함.
+        ->before(function()use($db,$x){ 
+            // Do something else
+            $stmt = $db->prepare("
+            INSERT INTO CMN_BATCH_LOG (
+                BATCH_SEQ, MSG, ADD_DT, ADD_ID
+            ) VALUES (
+                ?, ?, date_format(sysdate(),'%Y%m%d%H%i%s'), 0
+            )");
+            /* Bind variables to parameters */
+            $stmt->bind_param("is", $var1, $var2);
+            $var1 = $x["BATCH_SEQ"];
+            $var2 = "BATCH START";
+            $stmt->execute();
+            $stmt->close();
+        })
+        ->after(function()use($db,$x){ 
+            // After the task is run
+            // Do something else
+            $stmt = $db->prepare("
+            INSERT INTO CMN_BATCH_LOG (
+                BATCH_SEQ, MSG, ADD_DT, ADD_ID
+            ) VALUES (
+                ?, ?, date_format(sysdate(),'%Y%m%d%H%i%s'), 0
+            )");
+            /* Bind variables to parameters */
+            $stmt->bind_param("is",  $var1, $var2);
+            $var1 = $x["BATCH_SEQ"];
+            $var2 = "BATCH END";
+            $stmt->execute();
+            $stmt->close();            
+        })
         ->preventOverlapping($lockStore); //오버레팅 실행 방지 잘 동작함 ( 파라미터는 다르더라도 같은 PHP 파일이면 중북 실행이 안됨 )
 }
+
+closeDb($db);
 
 return $schedule;
 ?>
